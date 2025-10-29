@@ -1,13 +1,13 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
-const { openDrawer } = require('./cashDrawer');
+const { app, BrowserWindow, ipcMain } = require("electron");
+const path = require("path");
+const { openDrawer } = require("./cashDrawer");
 
 function createWindow() {
   const win = new BrowserWindow({
     width: 1024,
     height: 768,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
     },
@@ -17,16 +17,17 @@ function createWindow() {
   if (startUrl) {
     win.loadURL(startUrl);
   } else {
-    win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+    win.loadFile(path.join(__dirname, "renderer", "index.html"));
   }
 }
 
-ipcMain.handle('cashDrawer:open', async (_event, payload) => {
+ipcMain.handle("cashDrawer:open", async (_event, payload) => {
   try {
+    console.log("payload", payload);
     await openDrawer(payload);
     return { ok: true };
   } catch (error) {
-    console.error('Failed to open cash drawer:', error);
+    console.error("Failed to open cash drawer:", error);
     return { ok: false, message: error.message };
   }
 });
@@ -34,15 +35,15 @@ ipcMain.handle('cashDrawer:open', async (_event, payload) => {
 app.whenReady().then(() => {
   createWindow();
 
-  app.on('activate', () => {
+  app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
     app.quit();
   }
 });
