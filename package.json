@@ -9,8 +9,8 @@
   },
   "dependencies": {
     "electron": "^30.0.0",
-    "escpos": "^3.0.0-alpha.6",
-    "escpos-usb": "^3.0.0-alpha.4"
+    "escpos": "^2.5.2",
+    "escpos-usb": "^2.1.1"
   },
   "devDependencies": {
     "electronmon": "^2.0.2"

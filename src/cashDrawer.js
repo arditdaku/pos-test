@@ -1,23 +1,43 @@
-const escpos = require('escpos');
+const escpos = require("escpos");
 // Bind escpos to USB transport.
-escpos.USB = require('escpos-usb');
+try {
+  escpos.USB = require("escpos-usb");
+} catch (error) {
+  console.error("Failed to load escpos-usb:", error.message);
+  // Create a fallback USB class that throws helpful errors
+  escpos.USB = class USB {
+    constructor() {
+      throw new Error(
+        "USB printer support is not available. Please ensure proper drivers are installed and the printer is connected."
+      );
+    }
+    static findPrinter() {
+      throw new Error(
+        "USB printer enumeration is not available. Please ensure proper drivers are installed."
+      );
+    }
+    static findPrinters() {
+      return this.findPrinter();
+    }
+  };
+}
 
 /**
  * Normalize vendor/product IDs coming in from the renderer.
  * Accepts decimal numbers or hexadecimal strings (e.g. "0x0416").
  */
 const normalizeUsbId = (value) => {
-  if (value === undefined || value === null || value === '') {
+  if (value === undefined || value === null || value === "") {
     return undefined;
   }
 
-  if (typeof value === 'number') {
+  if (typeof value === "number") {
     return value;
   }
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     const trimmed = value.trim().toLowerCase();
-    if (trimmed.startsWith('0x')) {
+    if (trimmed.startsWith("0x")) {
       return parseInt(trimmed, 16);
     }
     return Number(trimmed);
@@ -30,14 +50,17 @@ const withPrinter = (options = {}, handler) => {
   const vendorId = normalizeUsbId(options.vendorId);
   const productId = normalizeUsbId(options.productId);
 
-  const device = vendorId !== undefined && productId !== undefined
-    ? new escpos.USB(vendorId, productId)
-    : new escpos.USB();
+  const device =
+    vendorId !== undefined && productId !== undefined
+      ? new escpos.USB(vendorId, productId)
+      : new escpos.USB();
 
   return new Promise((resolve, reject) => {
     device.open((deviceErr) => {
       if (deviceErr) {
-        reject(new Error(`Unable to open printer device: ${deviceErr.message}`));
+        reject(
+          new Error(`Unable to open printer device: ${deviceErr.message}`)
+        );
         return;
       }
 
@@ -82,13 +105,14 @@ async function openDrawer(options = {}) {
   });
 }
 
-const toHexId = (value) => `0x${value.toString(16).padStart(4, '0')}`;
+const toHexId = (value) => `0x${value.toString(16).padStart(4, "0")}`;
 
 const listDevices = () => {
   try {
-    const finder = typeof escpos.USB.findPrinter === 'function'
-      ? escpos.USB.findPrinter
-      : typeof escpos.USB.findPrinters === 'function'
+    const finder =
+      typeof escpos.USB.findPrinter === "function"
+        ? escpos.USB.findPrinter
+        : typeof escpos.USB.findPrinters === "function"
         ? escpos.USB.findPrinters
         : null;
 
@@ -118,24 +142,26 @@ const listDevices = () => {
 const printDemoReceipt = async (options = {}) => {
   const now = new Date();
   return withPrinter(options, (printer) => {
-    printer.align('ct');
-    printer.text('Salon POS Demo');
-    printer.text('----------------');
-    printer.align('lt');
-    printer.text(`Date: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`);
-    printer.text('Stylist: Demo User');
-    printer.text(' ');
-    printer.text('Service             Price');
-    printer.text('------------------------');
-    printer.text('Haircut             $25.00');
-    printer.text('Shampoo             $10.00');
-    printer.text(' ');
-    printer.text('Subtotal:           $35.00');
-    printer.text('Tax (10%):          $3.50');
-    printer.text('Total:              $38.50');
+    printer.align("ct");
+    printer.text("Salon POS Demo");
+    printer.text("----------------");
+    printer.align("lt");
+    printer.text(
+      `Date: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`
+    );
+    printer.text("Stylist: Demo User");
+    printer.text(" ");
+    printer.text("Service             Price");
+    printer.text("------------------------");
+    printer.text("Haircut             $25.00");
+    printer.text("Shampoo             $10.00");
+    printer.text(" ");
+    printer.text("Subtotal:           $35.00");
+    printer.text("Tax (10%):          $3.50");
+    printer.text("Total:              $38.50");
     printer.feed(2);
-    printer.align('ct');
-    printer.text('Thank you for visiting!');
+    printer.align("ct");
+    printer.text("Thank you for visiting!");
     printer.feed(3);
     printer.cut();
     printer.cashdraw(options.drawerPin === 5 ? 5 : 2);
